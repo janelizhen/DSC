@@ -20,10 +20,15 @@
 [DscResource()]
 class IPv6NodeResource
 {
-    [DscProperty(Key)][string]$IPv6Address
-    [DscProperty(Key)][string]$ConfigurationFilePath
-    [DscProperty()][PsCredential]$Credential
-    [DscProperty(NotConfigurable)][PSCredential]$PsDscRunAsCredential
+    [DscProperty(Key)]
+    [string]$IPv6Address
+    
+    [DscProperty(Key)]
+    [string]$ConfigurationFilePath
+    
+    [DscProperty()]
+    [PsCredential]$Credential
+
 
     [void] Set()
     {
