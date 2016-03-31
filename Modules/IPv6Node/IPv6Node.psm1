@@ -1,4 +1,4 @@
-﻿function Encode-MofFile
+﻿function Get-EncodedMofFile
 {
     param([string]$configurationFilePath)
     $mofDocument = [System.IO.File]::ReadAllBytes($configurationFilePath)
@@ -26,7 +26,7 @@ class IPv6NodeResource
 
     [void] Set()
     {
-        $encodedMof = Encode-MofFile -configurationFilePath $this.ConfigurationFilePath
+        $encodedMof = Get-EncodedMofFile -configurationFilePath $this.ConfigurationFilePath
         $session = New-CimSession -ComputerName $this.IPv6Address -Credential $this.Credential
         Invoke-CimMethod -Namespace root/Microsoft/Windows/DesiredStateConfiguration -ClassName MSFT_DSCLocalConfigurationManager -MethodName SendConfigurationApply -Arguments @{ConfigurationData=$encodedMof;Force=$true} -Verbose -CimSession $session
         $session | Remove-CimSession
