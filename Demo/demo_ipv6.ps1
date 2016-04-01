@@ -3,8 +3,8 @@ configuration config
 {
     #Node $computer_name
     #Node $ipv4_address
+    #Node localhost
     #Node $ipv6_address <-- not working
-    Node localhost
     {
         ...
     }
@@ -12,33 +12,7 @@ configuration config
 config
 Start-DscConfiguration -Path .\config -Wait -Verbose -Force
 
-<# A workaround #>
-function Get-EncodedMofFile
-{
-    param([string]$configurationFilePath)
-    $mofDocument = [System.IO.File]::ReadAllBytes($configurationFilePath)
-    $totalLength = $mofDocument.Length + 4
-    $encodedMof = New-Object Byte[] $totalLength
-    $encoding = [System.BitConverter]::GetBytes($totalLength)
-    $index = 0
-    foreach ($var in $encoding)
-    {
-        $encodedMof[$index++] = $var
-    }
-    foreach ($var in $mofDocument)
-    {
-        $encodedMof[$index++] = $var
-    }
-    $encodedMof
-}
-
-$encodedMof = Get-EncodedMofFile -configurationFilePath ".\config\localhost.mof"
-$session = New-CimSession -ComputerName $IPv6Address -Credential $Credential
-Invoke-CimMethod -Namespace root/Microsoft/Windows/DesiredStateConfiguration -ClassName MSFT_DSCLocalConfigurationManager -MethodName SendConfigurationApply -Arguments @{ConfigurationData=$encodedMof;Force=$true} -Verbose -CimSession $session
-$session | Remove-CimSession
-
-<# An even simplified way with above functionality and test/get wrapped in a class resource @ https://github.com/janelizhen/DSC.git #>
-
+<# An IPv6 class resource @ https://github.com/janelizhen/DSC.git #>
 configuration Desired_Config_On_Remote_IPv6_Node
 {
     File file
@@ -91,3 +65,29 @@ Start-DscConfiguration -Path C:\Demo\remote -Wait -Verbose -Force
        2) in remote management group;
        3) remote enabled for DesiredStateConfiguration namespace in WMI security
 #>
+
+
+<# Things behind the scene #>
+function Get-EncodedMofFile
+{
+    param([string]$configurationFilePath)
+    $mofDocument = [System.IO.File]::ReadAllBytes($configurationFilePath)
+    $totalLength = $mofDocument.Length + 4
+    $encodedMof = New-Object Byte[] $totalLength
+    $encoding = [System.BitConverter]::GetBytes($totalLength)
+    $index = 0
+    foreach ($var in $encoding)
+    {
+        $encodedMof[$index++] = $var
+    }
+    foreach ($var in $mofDocument)
+    {
+        $encodedMof[$index++] = $var
+    }
+    $encodedMof
+}
+
+$encodedMof = Get-EncodedMofFile -configurationFilePath ".\config\localhost.mof"
+$session = New-CimSession -ComputerName $IPv6Address -Credential $Credential
+Invoke-CimMethod -Namespace root/Microsoft/Windows/DesiredStateConfiguration -ClassName MSFT_DSCLocalConfigurationManager -MethodName SendConfigurationApply -Arguments @{ConfigurationData=$encodedMof;Force=$true} -Verbose -CimSession $session
+$session | Remove-CimSession
